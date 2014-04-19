@@ -32,18 +32,53 @@ func TestNewRainforest(t *testing.T) {
 }
 
 func TestRainforestRunTests(t *testing.T) {
-	rainforest := NewRainforest("ABC")
+	var (
+		err        error
+		rainforest *Rainforest
+	)
 
-	tr := &dummyTransport{
-		res: &http.Response{
-			Status:     "201 Created",
-			StatusCode: 201,
-			Proto:      "HTTP/1.0",
-			Body:       ioutil.NopCloser(strings.NewReader(`{"id":1,"object":"Run","created_at":"2014-04-19T06:06:47Z","environment_id":1770,"state_log":[],"state":"queued","result":"no_result","expected_wait_time":8100.0,"browsers":[{"name":"chrome","state":"disabled"},{"name":"firefox","state":"disabled"},{"name":"ie8","state":"disabled"},{"name":"ie9","state":"disabled"},{"name":"safari","state":"disabled"}],"requested_tests":[1,2,3]}`)),
-		},
-	}
+	rainforest = NewRainforest("ABC")
+
+	tr := &dummyTransport{}
 
 	rainforest.client = &http.Client{Transport: tr}
+
+	tr.res = &http.Response{
+		Status:     "403 Forbidden",
+		StatusCode: 403,
+		Proto:      "HTTP/1.0",
+		Body:       ioutil.NopCloser(strings.NewReader(`{"error":"Invalid test ids"}`)),
+	}
+
+	if _, err = rainforest.RunTests([]int{1, 2, 3}); err == nil {
+		t.Error("Expected to receive an error according to the mocked response")
+	}
+
+	if err.Error() != "Invalid test ids" {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	tr.res = &http.Response{
+		Status:     "404 Not Found",
+		StatusCode: 404,
+		Proto:      "HTTP/1.0",
+		Body:       ioutil.NopCloser(strings.NewReader(`{"error":"Account not found"}`)),
+	}
+
+	if _, err = rainforest.RunTests([]int{1, 2, 3}); err == nil {
+		t.Error("Expected to receive an error according to the mocked response")
+	}
+
+	if err.Error() != "Account not found" {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	tr.res = &http.Response{
+		Status:     "201 Created",
+		StatusCode: 201,
+		Proto:      "HTTP/1.0",
+		Body:       ioutil.NopCloser(strings.NewReader(`{"id":1,"object":"Run","created_at":"2014-04-19T06:06:47Z","environment_id":1770,"state_log":[],"state":"queued","result":"no_result","expected_wait_time":8100.0,"browsers":[{"name":"chrome","state":"disabled"},{"name":"firefox","state":"disabled"},{"name":"ie8","state":"disabled"},{"name":"ie9","state":"disabled"},{"name":"safari","state":"disabled"}],"requested_tests":[1,2,3]}`)),
+	}
 
 	test, _ := rainforest.RunTests([]int{1, 2, 3})
 

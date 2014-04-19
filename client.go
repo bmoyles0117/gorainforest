@@ -3,6 +3,7 @@ package rainforest
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -37,13 +38,23 @@ func (r *Rainforest) RunTests(test_ids []int) (*Test, error) {
 
 	defer res.Body.Close()
 
-	test := &Test{}
+	if res.StatusCode == 201 {
+		test := &Test{}
 
-	if err = json.NewDecoder(res.Body).Decode(test); err != nil {
-		return nil, err
+		if err = json.NewDecoder(res.Body).Decode(test); err != nil {
+			return nil, err
+		}
+
+		return test, nil
+	} else {
+		error_response := make(map[string]string)
+
+		if err = json.NewDecoder(res.Body).Decode(&error_response); err != nil {
+			return nil, err
+		}
+
+		return nil, errors.New(error_response["error"])
 	}
-
-	return test, nil
 }
 
 func NewRainforest(client_token string) *Rainforest {
