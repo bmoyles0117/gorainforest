@@ -25,6 +25,8 @@ const (
 	STATE_COMPLETE    = "complete"
 )
 
+var InvalidTestIds = errors.New("Invalid test IDs passed, must be a string or array of ints")
+
 type Rainforest struct {
 	ClientToken string
 	client      *http.Client
@@ -62,6 +64,8 @@ func (r *Rainforest) RunTests(test_filter interface{}) (*Test, error) {
 		if data, err = json.Marshal(map[string]interface{}{"tests": test_criteria}); err != nil {
 			return nil, err
 		}
+	} else {
+		return nil, InvalidTestIds
 	}
 
 	if res, err = r.doRequest("POST", "/runs", bytes.NewReader(data)); err != nil {

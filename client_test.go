@@ -89,6 +89,11 @@ func TestRainforestRunTests(t *testing.T) {
 
 	rainforest.client = &http.Client{Transport: tr}
 
+	// Attempt to run requests with an unsupported data type, expecting an error
+	if _, err = rainforest.RunTests(1.32); err != InvalidTestIds {
+		t.Error("Expected an error when trying to run a float as a test ID")
+	}
+
 	tr.res = &http.Response{
 		Status:     "403 Forbidden",
 		StatusCode: 403,
