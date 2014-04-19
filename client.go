@@ -8,7 +8,22 @@ import (
 	"net/http"
 )
 
-const ALL_TESTS = "all"
+const (
+	ALL_TESTS = "all"
+
+	RESULT_NONE   = "no_result"
+	RESULT_PASSED = "passed"
+	RESULT_FAILED = "failed"
+
+	STATE_ENABLED     = "enabled"
+	STATE_DISABLED    = "disabled"
+	STATE_QUEUED      = "queued"
+	STATE_VALIDATING  = "validating"
+	STATE_IN_PROGRESS = "in_progress"
+	STATE_PASSED      = "passed"
+	STATE_FAILED      = "failed"
+	STATE_COMPLETE    = "complete"
+)
 
 type Rainforest struct {
 	ClientToken string
