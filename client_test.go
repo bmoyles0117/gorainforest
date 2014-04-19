@@ -10,4 +10,8 @@ func TestNewRainforest(t *testing.T) {
 	if rainforest.ClientToken != "ABC" {
 		t.Errorf("Unexpected client token: %s", rainforest.ClientToken)
 	}
+
+	if rainforest.client == nil {
+		t.Error("Rainforest client was not assigned an http client")
+	}
 }
