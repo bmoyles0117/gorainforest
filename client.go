@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const ALL_TESTS = "all"
+
 type Rainforest struct {
 	ClientToken string
 	client      *http.Client
@@ -30,15 +32,21 @@ func (r *Rainforest) doRequest(method, path string, body io.Reader) (*http.Respo
 	return r.client.Do(req)
 }
 
-func (r *Rainforest) RunTests(test_ids []int) (*Test, error) {
+func (r *Rainforest) RunTests(test_filter interface{}) (*Test, error) {
 	var (
 		data []byte
 		err  error
 		res  *http.Response
 	)
 
-	if data, err = json.Marshal(map[string]interface{}{"tests": test_ids}); err != nil {
-		return nil, err
+	if test_ids, ok := test_filter.([]int); ok {
+		if data, err = json.Marshal(map[string]interface{}{"tests": test_ids}); err != nil {
+			return nil, err
+		}
+	} else if test_criteria, ok := test_filter.(string); ok {
+		if data, err = json.Marshal(map[string]interface{}{"tests": test_criteria}); err != nil {
+			return nil, err
+		}
 	}
 
 	if res, err = r.doRequest("POST", "/runs", bytes.NewReader(data)); err != nil {

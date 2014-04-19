@@ -126,6 +126,37 @@ func TestRainforestRunTests(t *testing.T) {
 		Body:       ioutil.NopCloser(strings.NewReader(`{"id":1,"object":"Run","created_at":"2014-04-19T06:06:47Z","environment_id":1770,"state_log":[],"state":"queued","result":"no_result","expected_wait_time":8100.0,"browsers":[{"name":"chrome","state":"disabled"},{"name":"firefox","state":"disabled"},{"name":"ie8","state":"disabled"},{"name":"ie9","state":"disabled"},{"name":"safari","state":"disabled"}],"requested_tests":[1,2,3]}`)),
 	}
 
+	// Ensure that we can run all tests, and set the body correctly
+	rainforest.RunTests(ALL_TESTS)
+
+	if h := tr.req.Header.Get("Content-type"); h != "application/json" {
+		t.Errorf("Content-type header was not set properly: %s", h)
+	}
+
+	if h := tr.req.Header.Get("Accept"); h != "application/json" {
+		t.Errorf("Accept header was not set properly: %s", h)
+	}
+
+	if h := tr.req.Header.Get("CLIENT_TOKEN"); h != "ABC" {
+		t.Errorf("CLIENT_TOKEN header was not set properly: %s", h)
+	}
+
+	if data, err := ioutil.ReadAll(tr.req.Body); err == nil {
+		if string(data) != `{"tests":"all"}` {
+			t.Errorf("Unexpected data stored in the request body: %s", string(data))
+		}
+	} else {
+		t.Errorf("Unexpected error reading request body: %s", err)
+	}
+
+	// Run a selective few tests, and ensure the parameters are set properly
+	tr.res = &http.Response{
+		Status:     "201 Created",
+		StatusCode: 201,
+		Proto:      "HTTP/1.0",
+		Body:       ioutil.NopCloser(strings.NewReader(`{"id":1,"object":"Run","created_at":"2014-04-19T06:06:47Z","environment_id":1770,"state_log":[],"state":"queued","result":"no_result","expected_wait_time":8100.0,"browsers":[{"name":"chrome","state":"disabled"},{"name":"firefox","state":"disabled"},{"name":"ie8","state":"disabled"},{"name":"ie9","state":"disabled"},{"name":"safari","state":"disabled"}],"requested_tests":[1,2,3]}`)),
+	}
+
 	test, _ := rainforest.RunTests([]int{1, 2, 3})
 
 	if h := tr.req.Header.Get("Content-type"); h != "application/json" {

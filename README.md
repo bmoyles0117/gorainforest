@@ -16,5 +16,9 @@ To install gorainforest, simply run `go get github.com/bmoyles0117/gorainforest`
 		clientToken := "ABC"
 		client := rainforest.NewRainforest(clientToken)
 
+		// Run tests selectively
 		client.RunTests([]int{1,2})
+
+		// Run all tests
+		client.RunTests(rainforest.ALL_TESTS)
 	}
