@@ -1,6 +1,7 @@
 package rainforest
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,11 @@ type dummyTransport struct {
 func (t *dummyTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	t.req = req
 
-	return t.res, nil
+	if t.res != nil {
+		return t.res, nil
+	} else {
+		return nil, errors.New("Dummy error")
+	}
 }
 
 func TestNewRainforest(t *testing.T) {
@@ -28,6 +33,47 @@ func TestNewRainforest(t *testing.T) {
 
 	if rainforest.client == nil {
 		t.Error("Rainforest client was not assigned an http client")
+	}
+}
+
+func TestRainforestDoRequest(t *testing.T) {
+	var (
+		data       []byte
+		err        error
+		rainforest *Rainforest
+	)
+
+	rainforest = NewRainforest("ABC")
+
+	tr := &dummyTransport{}
+
+	rainforest.client = &http.Client{Transport: tr}
+
+	// We don't care about the actual response here, just that the request was mutated
+	rainforest.doRequest("POST", "/runs", strings.NewReader("hello"))
+
+	if h := tr.req.Header.Get("Accept"); h != "application/json" {
+		t.Errorf("Accept header was not set properly: %s", h)
+	}
+
+	if h := tr.req.Header.Get("Content-type"); h != "application/json" {
+		t.Errorf("Content-type header was not set properly: %s", h)
+	}
+
+	if h := tr.req.Header.Get("CLIENT_TOKEN"); h != "ABC" {
+		t.Errorf("CLIENT_TOKEN header was not set properly: %s", h)
+	}
+
+	if data, err = ioutil.ReadAll(tr.req.Body); err != nil {
+		t.Errorf("Unexpected error reading the request's body: %s", err)
+	}
+
+	if string(data) != "hello" {
+		t.Errorf("Unexpected value stored in the request's body: %s", string(data))
+	}
+
+	if tr.req.URL.RequestURI() != "/api/1/runs" {
+		t.Errorf("Unexpected request URI: %s", tr.req.URL.RequestURI())
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 )
 
@@ -12,19 +13,13 @@ type Rainforest struct {
 	client      *http.Client
 }
 
-func (r *Rainforest) RunTests(test_ids []int) (*Test, error) {
+func (r *Rainforest) doRequest(method, path string, body io.Reader) (*http.Response, error) {
 	var (
-		data []byte
-		err  error
-		req  *http.Request
-		res  *http.Response
+		err error
+		req *http.Request
 	)
 
-	if data, err = json.Marshal(map[string]interface{}{"tests": test_ids}); err != nil {
-		return nil, err
-	}
-
-	if req, err = http.NewRequest("POST", "https://app.rainforestqa.com/api/1/runs", bytes.NewReader(data)); err != nil {
+	if req, err = http.NewRequest(method, "https://app.rainforestqa.com/api/1"+path, body); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +27,21 @@ func (r *Rainforest) RunTests(test_ids []int) (*Test, error) {
 	req.Header.Add("Content-type", "application/json")
 	req.Header.Add("CLIENT_TOKEN", r.ClientToken)
 
-	if res, err = r.client.Do(req); err != nil {
+	return r.client.Do(req)
+}
+
+func (r *Rainforest) RunTests(test_ids []int) (*Test, error) {
+	var (
+		data []byte
+		err  error
+		res  *http.Response
+	)
+
+	if data, err = json.Marshal(map[string]interface{}{"tests": test_ids}); err != nil {
+		return nil, err
+	}
+
+	if res, err = r.doRequest("POST", "/runs", bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
 
