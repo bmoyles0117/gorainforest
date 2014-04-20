@@ -27,6 +27,8 @@ const (
 
 var InvalidTestIds = errors.New("Invalid test IDs passed, must be a string or array of ints")
 
+// Rainforest stores the ClientToken and a few abstraction methods for
+// implementing the API.
 type Rainforest struct {
 	ClientToken string
 	client      *http.Client
@@ -49,6 +51,10 @@ func (r *Rainforest) doRequest(method, path string, body io.Reader) (*http.Respo
 	return r.client.Do(req)
 }
 
+// RunTests takes either a string, or an array of ints. The only string that
+// should be passed for the time being is ALL_TESTS ("all"). When executed
+// properly, a Test will be returned that represents the current state of the
+// tests that were executed.
 func (r *Rainforest) RunTests(test_filter interface{}) (*Test, error) {
 	var (
 		data []byte
@@ -93,6 +99,8 @@ func (r *Rainforest) RunTests(test_filter interface{}) (*Test, error) {
 	}
 }
 
+// Generate a new Rainforest client with the client token specified, and
+// associated to the default http client for executing requests.
 func NewRainforest(client_token string) *Rainforest {
 	return &Rainforest{
 		ClientToken: client_token,
